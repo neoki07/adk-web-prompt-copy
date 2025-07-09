@@ -28,7 +28,34 @@ export default defineContentScript({
       }
       
       .copy-prompt-button {
-        margin-right: var(--gem-sys-spacing--xs);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.8);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 0;
+        width: auto;
+        height: auto;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-right: 8px;
+        flex-shrink: 0;
+      }
+      
+      .copy-prompt-button:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: white;
+      }
+      
+      .copy-prompt-button mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
       }
     `;
     document.head.appendChild(style);
@@ -67,18 +94,13 @@ export default defineContentScript({
         if (!markdownElement) return;
         
         const copyButton = document.createElement('button');
-        copyButton.className = 'mdc-icon-button mat-mdc-icon-button mat-mdc-button-base mat-mdc-tooltip-trigger copy-prompt-button mat-unthemed';
-        copyButton.setAttribute('mat-icon-button', '');
+        copyButton.className = 'copy-prompt-button';
         copyButton.setAttribute('aria-label', 'コピー');
-        copyButton.setAttribute('mat-ripple-loader-class-name', 'mat-mdc-button-ripple');
-        copyButton.setAttribute('mat-ripple-loader-centered', '');
+        copyButton.title = 'テキストをコピー';
         
         copyButton.innerHTML = `
-          <span class="mat-mdc-button-persistent-ripple mdc-icon-button__ripple"></span>
-          <mat-icon role="img" fonticon="content_copy" class="mat-icon notranslate gds-icon-m google-symbols mat-ligature-font mat-icon-no-color" aria-hidden="true" data-mat-icon-type="font" data-mat-icon-name="content_copy">content_copy</mat-icon>
-          <span class="mat-focus-indicator"></span>
-          <span class="mat-mdc-button-touch-target"></span>
-          <span class="mat-ripple mat-mdc-button-ripple"></span>
+          <mat-icon role="img" class="mat-icon notranslate material-icons mat-ligature-font mat-icon-no-color" aria-hidden="true" data-mat-icon-type="font">content_copy</mat-icon>
+          <span>コピー</span>
         `;
         
         let tooltip: HTMLElement | null = null;
@@ -147,11 +169,8 @@ export default defineContentScript({
           }
         });
         
-        // Insert the button next to the existing user avatar button
-        const avatarButton = userMessage.querySelector('button[mat-mini-fab]');
-        if (avatarButton && avatarButton.parentNode) {
-          avatarButton.parentNode.insertBefore(copyButton, avatarButton.nextSibling);
-        }
+        // Insert the button as the first child of user-message
+        userMessage.insertBefore(copyButton, userMessage.firstChild);
       });
     }
     
