@@ -1,4 +1,5 @@
 export default defineContentScript({
+  matches: ['<all_urls>'],
   main() {
     // Add tooltip and button styles
     const style = document.createElement('style');
