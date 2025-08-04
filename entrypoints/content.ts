@@ -96,7 +96,6 @@ export default defineContentScript({
         const copyButton = document.createElement('button');
         copyButton.className = 'copy-prompt-button';
         copyButton.setAttribute('aria-label', 'コピー');
-        copyButton.title = 'テキストをコピー';
         
         copyButton.innerHTML = `
           <mat-icon role="img" class="mat-icon notranslate material-icons mat-ligature-font mat-icon-no-color" aria-hidden="true" data-mat-icon-type="font">content_copy</mat-icon>
