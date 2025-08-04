@@ -1,5 +1,4 @@
 export default defineContentScript({
-  matches: ['*://localhost:*/*', '*://127.0.0.1:*/*'],
   main() {
     // Add tooltip and button styles
     const style = document.createElement('style');
