@@ -1,10 +1,10 @@
 export default defineContentScript({
-  matches: ['<all_urls>'],
+  matches: ["<all_urls>"],
   main() {
     // Add tooltip and button styles
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
-      .gemini-copy-tooltip {
+      .adk-copy-tooltip {
         position: fixed;
         background-color: rgba(0, 0, 0, 0.87);
         color: white;
@@ -22,7 +22,7 @@ export default defineContentScript({
                     transform 150ms cubic-bezier(0, 0, 0.2, 1);
       }
       
-      .gemini-copy-tooltip.show {
+      .adk-copy-tooltip.show {
         opacity: 1;
         transform: scale(1) translateY(0);
       }
@@ -59,55 +59,55 @@ export default defineContentScript({
       }
     `;
     document.head.appendChild(style);
-    
+
     function createTooltip(targetElement: HTMLElement, text: string) {
       const rect = targetElement.getBoundingClientRect();
-      
-      const tooltip = document.createElement('div');
-      tooltip.className = 'gemini-copy-tooltip';
+
+      const tooltip = document.createElement("div");
+      tooltip.className = "adk-copy-tooltip";
       tooltip.textContent = text;
-      
+
       // Position tooltip below the button
       tooltip.style.left = `${rect.left + rect.width / 2}px`;
       tooltip.style.top = `${rect.bottom + 8}px`;
-      tooltip.style.transform = 'translateX(-50%) scale(0.8) translateY(-4px)';
-      
+      tooltip.style.transform = "translateX(-50%) scale(0.8) translateY(-4px)";
+
       document.body.appendChild(tooltip);
-      
+
       // Show tooltip with animation
       requestAnimationFrame(() => {
-        tooltip.classList.add('show');
-        tooltip.style.transform = 'translateX(-50%) scale(1) translateY(0)';
+        tooltip.classList.add("show");
+        tooltip.style.transform = "translateX(-50%) scale(1) translateY(0)";
       });
-      
+
       return tooltip;
     }
-    
+
     function addCopyButtons() {
-      const userMessages = document.querySelectorAll('.user-message');
-      
+      const userMessages = document.querySelectorAll(".user-message");
+
       userMessages.forEach((userMessage) => {
         // Check if copy button already exists
-        if (userMessage.querySelector('.copy-prompt-button')) return;
-        
-        const markdownElement = userMessage.querySelector('markdown');
+        if (userMessage.querySelector(".copy-prompt-button")) return;
+
+        const markdownElement = userMessage.querySelector("markdown");
         if (!markdownElement) return;
-        
-        const copyButton = document.createElement('button');
-        copyButton.className = 'copy-prompt-button';
-        copyButton.setAttribute('aria-label', 'コピー');
-        
+
+        const copyButton = document.createElement("button");
+        copyButton.className = "copy-prompt-button";
+        copyButton.setAttribute("aria-label", "コピー");
+
         copyButton.innerHTML = `
           <mat-icon role="img" class="mat-icon notranslate material-icons mat-ligature-font mat-icon-no-color" aria-hidden="true" data-mat-icon-type="font">content_copy</mat-icon>
           <span>コピー</span>
         `;
-        
+
         let tooltip: HTMLElement | null = null;
         let tooltipTimeout: ReturnType<typeof setTimeout> | null = null;
-        
+
         const removeTooltip = () => {
           if (tooltip) {
-            tooltip.classList.remove('show');
+            tooltip.classList.remove("show");
             if (tooltipTimeout) clearTimeout(tooltipTimeout);
             tooltipTimeout = setTimeout(() => {
               if (tooltip) {
@@ -117,71 +117,74 @@ export default defineContentScript({
             }, 150);
           }
         };
-        
-        copyButton.addEventListener('mouseenter', () => {
+
+        copyButton.addEventListener("mouseenter", () => {
           // Remove any existing tooltips first
-          document.querySelectorAll('.gemini-copy-tooltip').forEach(t => t.remove());
-          tooltip = createTooltip(copyButton, 'テキストをコピー');
+          document
+            .querySelectorAll(".adk-copy-tooltip")
+            .forEach((t) => t.remove());
+          tooltip = createTooltip(copyButton, "テキストをコピー");
         });
-        
-        copyButton.addEventListener('mouseleave', removeTooltip);
-        
+
+        copyButton.addEventListener("mouseleave", removeTooltip);
+
         // Also remove tooltip when scrolling or clicking elsewhere
-        copyButton.addEventListener('blur', removeTooltip);
-        document.addEventListener('scroll', removeTooltip, { passive: true });
-        
-        copyButton.addEventListener('click', async () => {
+        copyButton.addEventListener("blur", removeTooltip);
+        document.addEventListener("scroll", removeTooltip, { passive: true });
+
+        copyButton.addEventListener("click", async () => {
           removeTooltip();
-          
+
           if (!markdownElement) return;
-          
-          const paragraphs = markdownElement.querySelectorAll('p');
+
+          const paragraphs = markdownElement.querySelectorAll("p");
           const text = Array.from(paragraphs)
-            .map(p => p.textContent?.trim())
-            .filter(text => text)
-            .join('\n\n');
-          
+            .map((p) => p.textContent?.trim())
+            .filter((text) => text)
+            .join("\n\n");
+
           try {
             await navigator.clipboard.writeText(text);
-            const icon = copyButton.querySelector('mat-icon');
+            const icon = copyButton.querySelector("mat-icon");
             if (icon) {
-              icon.textContent = 'check';
-              (icon as HTMLElement).style.color = 'var(--bard-color-code-quotes-and-meta)';
-              
+              icon.textContent = "check";
+              (icon as HTMLElement).style.color =
+                "var(--bard-color-code-quotes-and-meta)";
+
               setTimeout(() => {
-                icon.textContent = 'content_copy';
-                (icon as HTMLElement).style.color = '';
+                icon.textContent = "content_copy";
+                (icon as HTMLElement).style.color = "";
               }, 2000);
             }
           } catch (err) {
-            console.error('Failed to copy text:', err);
-            const icon = copyButton.querySelector('mat-icon');
+            console.error("Failed to copy text:", err);
+            const icon = copyButton.querySelector("mat-icon");
             if (icon) {
-              icon.textContent = 'error';
-              (icon as HTMLElement).style.color = '#ea4335';
-              
+              icon.textContent = "error";
+              (icon as HTMLElement).style.color = "#ea4335";
+
               setTimeout(() => {
-                icon.textContent = 'content_copy';
-                (icon as HTMLElement).style.color = '';
+                icon.textContent = "content_copy";
+                (icon as HTMLElement).style.color = "";
               }, 2000);
             }
           }
         });
-        
+
         // Insert the button as the first child of user-message
         userMessage.insertBefore(copyButton, userMessage.firstChild);
       });
     }
-    
+
     const observer = new MutationObserver(() => {
       addCopyButtons();
     });
-    
+
     observer.observe(document.body, {
       childList: true,
-      subtree: true
+      subtree: true,
     });
-    
+
     addCopyButtons();
   },
 });
