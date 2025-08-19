@@ -14,7 +14,11 @@
     "compile": "tsc --noEmit",
     "postinstall": "wxt prepare"
   },
+  "dependencies": {
+    "turndown": "^7.2.1"
+  },
   "devDependencies": {
+    "@types/turndown": "^5.0.5",
     "typescript": "^5.8.3",
     "wxt": "^0.20.6"
   }

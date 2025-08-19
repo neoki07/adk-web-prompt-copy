@@ -1,3 +1,5 @@
+import TurndownService from 'turndown';
+
 export default defineContentScript({
   matches: ["<all_urls>"],
   main() {
@@ -158,7 +160,10 @@ export default defineContentScript({
 
           if (!markdownElement) return;
 
-          const text = markdownElement.textContent?.trim() || "";
+          // Convert HTML to Markdown using Turndown
+          const turndownService = new TurndownService();
+          const markdown = turndownService.turndown(markdownElement.innerHTML);
+          const text = markdown;
 
           try {
             await navigator.clipboard.writeText(text);
