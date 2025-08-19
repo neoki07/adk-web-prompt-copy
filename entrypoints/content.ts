@@ -161,7 +161,12 @@ export default defineContentScript({
           if (!markdownElement) return;
 
           // Convert HTML to Markdown using Turndown
-          const turndownService = new TurndownService();
+          const turndownService = new TurndownService({
+            headingStyle: 'atx',           // Use # style headings (modern standard)
+            hr: '---',                     // Use --- for horizontal rules (most common)
+            bulletListMarker: '-',         // Use - for bullet lists (modern standard)
+            codeBlockStyle: 'fenced'       // Use ``` code blocks (modern standard)
+          });
           const markdown = turndownService.turndown(markdownElement.innerHTML);
           const text = markdown;
 
