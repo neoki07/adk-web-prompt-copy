@@ -3,6 +3,10 @@ import TurndownService from 'turndown';
 export default defineContentScript({
   matches: ["<all_urls>"],
   main() {
+    // Early exit if not ADK Web
+    if (!isADKWeb()) {
+      return;
+    }
     // Add tooltip and button styles
     const style = document.createElement("style");
     style.textContent = `
@@ -221,3 +225,9 @@ export default defineContentScript({
     addCopyButtons();
   },
 });
+
+// Check if current page is ADK Web
+function isADKWeb(): boolean {
+  const title = document.title;
+  return title.includes('Agent Development Kit') || title.includes('ADK');
+}
