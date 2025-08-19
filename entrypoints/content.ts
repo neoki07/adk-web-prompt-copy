@@ -57,6 +57,22 @@ export default defineContentScript({
         width: 14px;
         height: 14px;
       }
+      
+      /* Consistent spacing for different message types */
+      .user-message .copy-prompt-button {
+        margin-right: 8px;
+      }
+      
+      .bot-message .copy-prompt-button {
+        margin-left: 8px;
+      }
+      
+      /* Prevent focus-within interference for copy buttons */
+      .bot-message:has(.copy-prompt-button:focus) .message-card,
+      .bot-message:has(.copy-prompt-button:active) .message-card {
+        background-color: #303030 !important;
+        border: none !important;
+      }
     `;
     document.head.appendChild(style);
 
@@ -84,13 +100,13 @@ export default defineContentScript({
     }
 
     function addCopyButtons() {
-      const userMessages = document.querySelectorAll(".user-message");
+      const allMessages = document.querySelectorAll(".user-message, .bot-message");
 
-      userMessages.forEach((userMessage) => {
+      allMessages.forEach((message) => {
         // Check if copy button already exists
-        if (userMessage.querySelector(".copy-prompt-button")) return;
+        if (message.querySelector(".copy-prompt-button")) return;
 
-        const markdownElement = userMessage.querySelector("markdown");
+        const markdownElement = message.querySelector("markdown");
         if (!markdownElement) return;
 
         const copyButton = document.createElement("button");
@@ -132,8 +148,13 @@ export default defineContentScript({
         copyButton.addEventListener("blur", removeTooltip);
         document.addEventListener("scroll", removeTooltip, { passive: true });
 
-        copyButton.addEventListener("click", async () => {
+        copyButton.addEventListener("click", async (event) => {
           removeTooltip();
+          
+          // Prevent focus and event bubbling to avoid UI interference
+          event.preventDefault();
+          event.stopPropagation();
+          copyButton.blur();
 
           if (!markdownElement) return;
 
@@ -167,8 +188,14 @@ export default defineContentScript({
           }
         });
 
-        // Insert the button as the first child of user-message
-        userMessage.insertBefore(copyButton, userMessage.firstChild);
+        // Position button based on message type
+        if (message.classList.contains("user-message")) {
+          // User messages: button on the left (first child)
+          message.insertBefore(copyButton, message.firstChild);
+        } else {
+          // Bot messages: button on the right (last child)
+          message.appendChild(copyButton);
+        }
       });
     }
 
