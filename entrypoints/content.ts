@@ -137,11 +137,7 @@ export default defineContentScript({
 
           if (!markdownElement) return;
 
-          const paragraphs = markdownElement.querySelectorAll("p");
-          const text = Array.from(paragraphs)
-            .map((p) => p.textContent?.trim())
-            .filter((text) => text)
-            .join("\n\n");
+          const text = markdownElement.textContent?.trim() || "";
 
           try {
             await navigator.clipboard.writeText(text);
