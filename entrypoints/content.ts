@@ -1,4 +1,4 @@
-import TurndownService from 'turndown';
+import TurndownService from "turndown";
 
 export default defineContentScript({
   matches: ["<all_urls>"],
@@ -106,7 +106,9 @@ export default defineContentScript({
     }
 
     function addCopyButtons() {
-      const allMessages = document.querySelectorAll(".user-message, .bot-message");
+      const allMessages = document.querySelectorAll(
+        ".user-message, .bot-message"
+      );
 
       allMessages.forEach((message) => {
         // Check if copy button already exists
@@ -156,7 +158,7 @@ export default defineContentScript({
 
         copyButton.addEventListener("click", async (event) => {
           removeTooltip();
-          
+
           // Prevent focus and event bubbling to avoid UI interference
           event.preventDefault();
           event.stopPropagation();
@@ -166,11 +168,16 @@ export default defineContentScript({
 
           // Convert HTML to Markdown using Turndown
           const turndownService = new TurndownService({
-            headingStyle: 'atx',           // Use # style headings (modern standard)
-            hr: '---',                     // Use --- for horizontal rules (most common)
-            bulletListMarker: '-',         // Use - for bullet lists (modern standard)
-            codeBlockStyle: 'fenced'       // Use ``` code blocks (modern standard)
+            headingStyle: "atx", // Use # style headings (modern standard)
+            hr: "---", // Use --- for horizontal rules (most common)
+            bulletListMarker: "-", // Use - for bullet lists (modern standard)
+            codeBlockStyle: "fenced", // Use ``` code blocks (modern standard)
           });
+
+          turndownService.escape = function (string: string) {
+            return string;
+          };
+
           const markdown = turndownService.turndown(markdownElement.innerHTML);
           const text = markdown;
 
@@ -229,5 +236,5 @@ export default defineContentScript({
 // Check if current page is ADK Web
 function isADKWeb(): boolean {
   const title = document.title;
-  return title.includes('Agent Development Kit') || title.includes('ADK');
+  return title.includes("Agent Development Kit") || title.includes("ADK");
 }
