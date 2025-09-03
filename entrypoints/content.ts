@@ -105,6 +105,95 @@ export default defineContentScript({
       return tooltip;
     }
 
+    // Check if we're in a secure context for clipboard API
+    function isSecureContext(): boolean {
+      return (
+        window.isSecureContext &&
+        !!navigator.clipboard &&
+        !!navigator.clipboard.writeText
+      );
+    }
+
+    // Fallback copy function for non-secure contexts
+    function fallbackCopyTextToClipboard(text: string): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+
+        // Make the textarea invisible but accessible
+        textArea.style.position = "fixed";
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.width = "2em";
+        textArea.style.height = "2em";
+        textArea.style.padding = "0";
+        textArea.style.border = "none";
+        textArea.style.outline = "none";
+        textArea.style.boxShadow = "none";
+        textArea.style.background = "transparent";
+        textArea.style.opacity = "0";
+        textArea.style.pointerEvents = "none";
+
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+          const successful = document.execCommand("copy");
+          document.body.removeChild(textArea);
+
+          if (successful) {
+            resolve();
+          } else {
+            reject(new Error('document.execCommand("copy") failed'));
+          }
+        } catch (err) {
+          document.body.removeChild(textArea);
+          reject(err);
+        }
+      });
+    }
+
+    // Main copy function with fallback
+    async function copyTextToClipboard(text: string): Promise<void> {
+      if (isSecureContext()) {
+        // Use modern clipboard API for secure contexts
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Use fallback for non-secure contexts (HTTP sites)
+        await fallbackCopyTextToClipboard(text);
+      }
+    }
+
+    // Show success feedback
+    function showCopySuccess(copyButton: HTMLElement) {
+      const icon = copyButton.querySelector("mat-icon");
+      if (icon) {
+        icon.textContent = "check";
+        (icon as HTMLElement).style.color =
+          "var(--bard-color-code-quotes-and-meta)";
+
+        setTimeout(() => {
+          icon.textContent = "content_copy";
+          (icon as HTMLElement).style.color = "";
+        }, 2000);
+      }
+    }
+
+    // Show error feedback
+    function showCopyError(copyButton: HTMLElement) {
+      const icon = copyButton.querySelector("mat-icon");
+      if (icon) {
+        icon.textContent = "error";
+        (icon as HTMLElement).style.color = "#ea4335";
+
+        setTimeout(() => {
+          icon.textContent = "content_copy";
+          (icon as HTMLElement).style.color = "";
+        }, 2000);
+      }
+    }
+
     function addCopyButtons() {
       const allMessages = document.querySelectorAll(
         ".user-message, .bot-message"
@@ -147,7 +236,9 @@ export default defineContentScript({
           document
             .querySelectorAll(".adk-copy-tooltip")
             .forEach((t) => t.remove());
-          tooltip = createTooltip(copyButton, "テキストをコピー");
+
+          const tooltipText = "テキストをコピー";
+          tooltip = createTooltip(copyButton, tooltipText);
         });
 
         copyButton.addEventListener("mouseleave", removeTooltip);
@@ -182,30 +273,11 @@ export default defineContentScript({
           const text = markdown;
 
           try {
-            await navigator.clipboard.writeText(text);
-            const icon = copyButton.querySelector("mat-icon");
-            if (icon) {
-              icon.textContent = "check";
-              (icon as HTMLElement).style.color =
-                "var(--bard-color-code-quotes-and-meta)";
-
-              setTimeout(() => {
-                icon.textContent = "content_copy";
-                (icon as HTMLElement).style.color = "";
-              }, 2000);
-            }
+            await copyTextToClipboard(text);
+            showCopySuccess(copyButton);
           } catch (err) {
             console.error("Failed to copy text:", err);
-            const icon = copyButton.querySelector("mat-icon");
-            if (icon) {
-              icon.textContent = "error";
-              (icon as HTMLElement).style.color = "#ea4335";
-
-              setTimeout(() => {
-                icon.textContent = "content_copy";
-                (icon as HTMLElement).style.color = "";
-              }, 2000);
-            }
+            showCopyError(copyButton);
           }
         });
 
